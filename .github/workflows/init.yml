@@ -317,29 +317,26 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          # Read protection rules from file
-          PROTECTION_RULES=$(cat .github/branch-protection.json)
-
           # Configure branch protection for main
           gh api \
             --method PUT \
             -H "Accept: application/vnd.github.v3+json" \
             "/repos/${{ github.repository }}/branches/main/protection" \
-            --raw-field="$(cat .github/branch-protection.json)"
+            --input .github/branch-protection.json
 
           # Configure branch protection for fork_upstream
           gh api \
             --method PUT \
             -H "Accept: application/vnd.github.v3+json" \
             "/repos/${{ github.repository }}/branches/fork_upstream/protection" \
-            --raw-field="$(cat .github/branch-protection.json)"
+            --input .github/branch-protection.json
 
           # Configure branch protection for fork_integration
           gh api \
             --method PUT \
             -H "Accept: application/vnd.github.v3+json" \
             "/repos/${{ github.repository }}/branches/fork_integration/protection" \
-            --raw-field="$(cat .github/branch-protection.json)"
+            --input .github/branch-protection.json
 
       - name: Cleanup Templates
         if: steps.check_setup.outputs.should_proceed == 'true' && success()
