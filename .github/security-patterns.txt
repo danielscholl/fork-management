@@ -13,6 +13,10 @@ DefaultEndpointsProtocol=https?://[^;]+;AccountKey=[^;]+
 AccountKey=[a-zA-Z0-9+/=]+
 SharedAccessKey=[a-zA-Z0-9+/=]+
 
+# Azure Service Principal Secrets (specific format)
+[a-zA-Z0-9]{3}7Q~[a-zA-Z0-9_\-\.]{20,22}
+['\"](sp_secret|service_principal_secret|TESTER_SERVICEPRINCIPAL_SECRET|NO_DATA_ACCESS_TESTER_SERVICEPRINCIPAL_SECRET)['\"]?\s*[=:]\s*['\""][a-zA-Z0-9]{3}7Q~[a-zA-Z0-9_\-\.]{20,22}['\""]
+
 # AWS
 ['\"](aws_access_key_id|aws_secret_access_key|aws_session_token)['\"]:\s*['\""][^'\"]+['\""]
 AKIA[0-9A-Z]{16}
