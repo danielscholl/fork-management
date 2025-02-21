@@ -269,6 +269,9 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
+          # Copy security patterns to runner temp location before switching branches
+          cp .github/security-patterns.txt "$RUNNER_TEMP/security-patterns.txt"
+          
           # 1. Create fork_upstream from upstream's default branch
           git checkout -b fork_upstream upstream/$DEFAULT_BRANCH
           
@@ -285,7 +288,7 @@ jobs:
           
           # First pass: Replace content matching patterns with [REMOVED]
           git filter-repo \
-            --replace-text .github/security-patterns.txt \
+            --replace-text "$RUNNER_TEMP/security-patterns.txt" \
             --force
           
           # Second pass: Remove sensitive files and paths
@@ -316,6 +319,9 @@ jobs:
             --path-glob 'connections.*' \
             --force
             
+          # Clean up temporary file
+          rm "$RUNNER_TEMP/security-patterns.txt"
+          
           # Restore remotes after cleaning
           git remote add origin $ORIGIN_URL || true
           git remote add upstream $UPSTREAM_URL || true
