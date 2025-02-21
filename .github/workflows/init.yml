@@ -250,40 +250,49 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          # 1. Create fork_upstream from upstream's default branch with depth 1
-          git fetch upstream $DEFAULT_BRANCH --depth=1
-          git checkout -b fork_upstream upstream/$DEFAULT_BRANCH
-          git push -f origin fork_upstream
-          
-          # 2. Create fork_integration and setup
-          git checkout -b fork_integration fork_upstream
-          
+          # Configure Git
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+          # 1. Clone the latest commit from upstream with NO history
+          git clone --depth=1 --branch=$DEFAULT_BRANCH https://github.com/upstream-org/repo.git repo-temp
+
+          # Move into the repo directory
+          cd repo-temp
+
+          # 2. Remove all Git history (eliminates secrets)
+          rm -rf .git
+          git init
+          git remote add origin https://github.com/danielscholl-osdu/File.git
+
+          # 3. Recreate a clean branch
+          git checkout -b fork_upstream
+
           # Add workflow env file
           mkdir -p .github
           echo "INITIALIZATION_COMPLETE=true" > .github/workflow.env
-          
+
           # Copy cleaned-up workflows and dependabot config from main
-          git checkout main -- .github/workflows/validate.yml \
-                              .github/workflows/release.yml \
-                              .github/workflows/sync.yml \
-                              .github/dependabot.yml
-          
-          # Commit and push changes to fork_integration
-          git add .github
-          git commit -m "chore: add workflow environment file, dependabot config, and cleaned-up workflows"
+          git clone --depth=1 --branch=main https://github.com/danielscholl-osdu/File.git main-temp
+          cp -r main-temp/.github/workflows repo-temp/.github/
+          cp main-temp/.github/dependabot.yml repo-temp/.github/
+          rm -rf main-temp
+
+          # Commit and push the cleaned repository
+          git add .
+          git commit -m "chore: reset history with latest clean state"
+          git push -f origin fork_upstream
+
+          # 4. Create and merge fork_integration
+          git checkout -b fork_integration fork_upstream
+          git commit --allow-empty -m "chore: initialize fork_integration"
           git push origin fork_integration
-          
-          # 3. Merge fork_integration into main
-          git checkout main
-          if ! git merge origin/fork_integration --allow-unrelated-histories; then
-            # If there are conflicts, take integration branch version
-            git status --porcelain | grep -E '^(DD|AU|UD|UA|DU|AA|UU)' | cut -c4- | while read -r file; do
-              git checkout --theirs "$file"
-              git add "$file"
-            done
-            git commit -m "chore: merge fork_integration into main, resolving conflicts with integration changes"
-          fi
-          git push origin main
+
+          git checkout -b main
+          git merge fork_integration --allow-unrelated-histories
+
+          # Push final clean history to main
+          git push -f origin main
 
       - name: Store Upstream URL
         if: steps.check_setup.outputs.should_proceed == 'true'
