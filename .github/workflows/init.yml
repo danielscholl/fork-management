@@ -200,7 +200,7 @@ jobs:
         if: steps.check_setup.outputs.should_proceed == 'true'
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           token: ${{ secrets.PAT_TOKEN }}
           
       - name: Configure Git
@@ -250,7 +250,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          # 1. Create fork_upstream from upstream's default branch
+          # 1. Create fork_upstream from upstream's default branch with depth 1
+          git fetch upstream $DEFAULT_BRANCH --depth=1
           git checkout -b fork_upstream upstream/$DEFAULT_BRANCH
           git push -f origin fork_upstream
           
@@ -311,6 +312,23 @@ jobs:
           gh label create initialization \
             --description "Issues related to repository initialization" \
             --color "0366d6" || true
+
+      - name: Enable Security Features
+        if: steps.check_setup.outputs.should_proceed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          # Enable secret scanning and push protection
+          gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github.v3+json" \
+            "/repos/${{ github.repository }}" \
+            -f security_and_analysis='{
+              "secret_scanning": {"status": "enabled"},
+              "secret_scanning_push_protection": {"status": "enabled"},
+              "dependabot_security_updates": {"status": "enabled"},
+              "advanced_security": {"status": "enabled"}
+            }'
 
       - name: Configure Branch Protection
         if: steps.check_setup.outputs.should_proceed == 'true'
