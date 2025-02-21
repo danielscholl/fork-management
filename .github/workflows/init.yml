@@ -319,22 +319,27 @@ jobs:
           git commit -m "chore: add workflow environment file, dependabot config, and cleaned-up workflows"
           git push origin fork_integration
           
-          # 3. Merge fork_integration into main
-          git checkout main
-          git pull origin main
+          # 3. Merge fork_integration into main with improved strategy
+          echo "Merging fork_integration into main..."
           
-          # Try to merge fork_integration
-          if ! git merge origin/fork_integration --allow-unrelated-histories; then
-            # If there are conflicts, take integration branch version
+          # Switch to main and ensure we have latest
+          git checkout main
+          git fetch origin main
+          
+          # Attempt merge with unrelated histories, preferring integration changes
+          if ! git merge fork_integration --allow-unrelated-histories -X theirs; then
+            echo "Merge conflicts detected, resolving in favor of integration branch..."
+            # If there are still conflicts, explicitly take integration branch version
             git status --porcelain | grep -E '^(DD|AU|UD|UA|DU|AA|UU)' | cut -c4- | while read -r file; do
+              echo "Resolving conflict in $file..."
               git checkout --theirs "$file"
               git add "$file"
             done
             git commit -m "chore: merge fork_integration into main, resolving conflicts with integration changes"
           fi
           
-          # Since this is initialization, we want our changes to be the source of truth
-          git push -f origin main
+          # Push the merged changes
+          git push origin main
 
       - name: Re-enable Security Features
         if: steps.check_setup.outputs.should_proceed == 'true'
