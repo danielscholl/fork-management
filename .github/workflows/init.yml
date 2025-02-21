@@ -280,14 +280,40 @@ jobs:
           # Install git-filter-repo
           sudo apt-get update && sudo apt-get install -y git-filter-repo
           
-          # Clean sensitive files (common patterns)
+          # First analyze the repo to find potential secrets
+          git filter-repo --analyze
+          
+          # First pass: Replace content matching patterns with [REMOVED]
+          git filter-repo \
+            --replace-text .github/security-patterns.txt \
+            --force
+          
+          # Second pass: Remove sensitive files and paths
           git filter-repo \
             --invert-paths \
-            --path-glob '*.env' \
-            --path-glob '*.key' \
             --path-glob '*secret*' \
             --path-glob '*credential*' \
+            --path-glob '*password*' \
+            --path-glob '*token*' \
+            --path-glob '*key*' \
+            --path-glob '*auth*' \
+            --path-glob '*oauth*' \
+            --path-glob '*cert*' \
+            --path-glob '*.env*' \
             --path-glob '*.pem' \
+            --path-glob '*.key' \
+            --path-glob '*.p12' \
+            --path-glob '*.pfx' \
+            --path-glob '*.pkcs12' \
+            --path-glob '*id_rsa*' \
+            --path-glob '*id_dsa*' \
+            --path-glob '*id_ecdsa*' \
+            --path-glob '*id_ed25519*' \
+            --path-glob '*.keystore' \
+            --path-glob '*.jks' \
+            --path-glob 'secrets.*' \
+            --path-glob 'credentials.*' \
+            --path-glob 'connections.*' \
             --force
             
           # Restore remotes after cleaning
@@ -298,7 +324,7 @@ jobs:
           git remote set-url origin "https://$GITHUB_TOKEN@github.com/${{ github.repository }}.git"
           git remote set-url upstream "https://$GITHUB_TOKEN@github.com/$UPSTREAM_URL"
           
-          # Push cleaned branch
+          # Push cleaned branch with force
           git push -f origin fork_upstream
           
           # 2. Create fork_integration and setup
@@ -438,6 +464,7 @@ jobs:
           rm -f .github/branch-protection.json
           rm -f .github/security-on.json
           rm -f .github/security-off.json
+          rm -f .github/security-patterns.txt
           rm -rf .cursor/
 
           # Commit and push changes
