@@ -265,6 +265,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
+          # Configure Git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
           # 1. Create fork_upstream from upstream's default branch
           git checkout -b fork_upstream upstream/$DEFAULT_BRANCH
           
@@ -287,7 +291,7 @@ jobs:
             --force
             
           # Restore remotes after cleaning
-          git remote add origin $ORIGIN_URL
+          git remote add origin $ORIGIN_URL || true
           git remote add upstream $UPSTREAM_URL || true
           
           # Configure remotes with authentication
@@ -317,6 +321,9 @@ jobs:
           
           # 3. Merge fork_integration into main
           git checkout main
+          git pull origin main
+          
+          # Try to merge fork_integration
           if ! git merge origin/fork_integration --allow-unrelated-histories; then
             # If there are conflicts, take integration branch version
             git status --porcelain | grep -E '^(DD|AU|UD|UA|DU|AA|UU)' | cut -c4- | while read -r file; do
@@ -325,7 +332,9 @@ jobs:
             done
             git commit -m "chore: merge fork_integration into main, resolving conflicts with integration changes"
           fi
-          git push origin main
+          
+          # Since this is initialization, we want our changes to be the source of truth
+          git push -f origin main
 
       - name: Re-enable Security Features
         if: steps.check_setup.outputs.should_proceed == 'true'
