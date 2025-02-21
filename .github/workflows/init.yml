@@ -245,7 +245,7 @@ jobs:
           echo "DEFAULT_BRANCH=$DEFAULT_BRANCH" >> $GITHUB_ENV
           echo "::notice::Using upstream branch: $DEFAULT_BRANCH"
 
-      - name: Temporarily Disable Security Features
+      - name: Disable Security Features
         if: steps.check_setup.outputs.should_proceed == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
@@ -255,10 +255,7 @@ jobs:
             --method PATCH \
             -H "Accept: application/vnd.github.v3+json" \
             "/repos/${{ github.repository }}" \
-            -f security_and_analysis='{
-              "secret_scanning": {"status": "disabled"},
-              "secret_scanning_push_protection": {"status": "disabled"}
-            }'
+            --input .github/security-off.json
           
           # Wait a moment for the changes to take effect
           sleep 10
@@ -334,12 +331,7 @@ jobs:
             --method PATCH \
             -H "Accept: application/vnd.github.v3+json" \
             "/repos/${{ github.repository }}" \
-            -f security_and_analysis='{
-              "secret_scanning": {"status": "enabled"},
-              "secret_scanning_push_protection": {"status": "enabled"},
-              "dependabot_security_updates": {"status": "enabled"},
-              "advanced_security": {"status": "enabled"}
-            }'
+            --input .github/security-on.json
 
       - name: Store Upstream URL
         if: steps.check_setup.outputs.should_proceed == 'true'
@@ -368,23 +360,6 @@ jobs:
           gh label create initialization \
             --description "Issues related to repository initialization" \
             --color "0366d6" || true
-
-      - name: Enable Security Features
-        if: steps.check_setup.outputs.should_proceed == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          # Enable secret scanning and push protection
-          gh api \
-            --method PATCH \
-            -H "Accept: application/vnd.github.v3+json" \
-            "/repos/${{ github.repository }}" \
-            -f security_and_analysis='{
-              "secret_scanning": {"status": "enabled"},
-              "secret_scanning_push_protection": {"status": "enabled"},
-              "dependabot_security_updates": {"status": "enabled"},
-              "advanced_security": {"status": "enabled"}
-            }'
 
       - name: Configure Branch Protection
         if: steps.check_setup.outputs.should_proceed == 'true'
@@ -440,6 +415,8 @@ jobs:
           rm -f .github/workflows/init.yml
           rm -f .github/workflows/init-complete.yml
           rm -f .github/branch-protection.json
+          rm -f .github/security-on.json
+          rm -f .github/security-off.json
           rm -rf .cursor/
 
           # Commit and push changes
