@@ -386,6 +386,9 @@ jobs:
             "/repos/${{ github.repository }}" \
             --input .github/security-on.json
 
+          # Wait a moment for the changes to take effect
+          sleep 10
+
       - name: Store Upstream URL
         if: steps.check_setup.outputs.should_proceed == 'true'
         env:
