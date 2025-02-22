@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
 
+# Add workflow-level permissions
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
 jobs:
   check-initialization:
     runs-on: ubuntu-latest
@@ -34,6 +40,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      issues: write
       
     steps:
       - uses: google-github-actions/release-please-action@v4
