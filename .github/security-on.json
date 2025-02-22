@@ -2,7 +2,6 @@
     "security_and_analysis": {
       "secret_scanning": { "status": "enabled" },
       "secret_scanning_push_protection": { "status": "enabled" },
-      "advanced_security": { "status": "enabled" },
       "dependabot_security_updates": { "status": "enabled" },
       "dependabot_alerts": { "status": "enabled" }
     }
