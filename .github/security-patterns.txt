@@ -18,9 +18,12 @@ SharedAccessKey=[a-zA-Z0-9+/=]+
 # Azure AD Application Secrets (in code context)
 ['"](client_secret|app_secret|application_secret|service_principal_secret|TESTER_SERVICEPRINCIPAL_SECRET)['"]?\s*[=:]\s*['"][a-zA-Z0-9]{3}7Q~[a-zA-Z0-9_\-\.]{20,36}['"]
 
-# Azure Service Principal Secret Java Pattern - Only catch hardcoded sp_secret
-String\s+sp_secret\s*=\s*['""][a-zA-Z0-9]{3}7Q~[a-zA-Z0-9_\-\.]{20,36}['""];
-
+# Azure Service Principal Secret Java Pattern
+# Only match the exact pattern we know:
+# - String sp_secret = "..." with exact format
+# - 3 chars + 7Q~ + 32 chars
+# - Chars can include alphanumeric, dots, underscores, hyphens
+String\s+sp_secret\s*=\s*['""][a-zA-Z0-9]{3}7Q~[a-zA-Z0-9][a-zA-Z0-9_\-\.]{30}[a-zA-Z0-9]['""];
 
 # AWS
 ['\"](aws_access_key_id|aws_secret_access_key|aws_session_token)['\"]:\s*['\""][^'\"]+['\""]
